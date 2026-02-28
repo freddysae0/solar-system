@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar System — WebGPU</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #d0dcf0;
+    }
+    canvas { display: block; }
+
+    /* ── HUD overlay ───────────────────────────────── */
+    #hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Title */
+    #title {
+      position: absolute;
+      top: 20px; left: 22px;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.45;
+    }
+
+    /* Bottom controls */
+    #controls {
+      position: absolute;
+      bottom: 22px; left: 22px;
+      pointer-events: all;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+    .ctrl-label { width: 90px; }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 130px; height: 2px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: #7eb8ff;
+      cursor: pointer;
+    }
+    #speed-val { width: 40px; text-align: right; font-size: 10px; opacity: 0.55; }
+
+    /* Legend */
+    #legend {
+      position: absolute;
+      bottom: 22px; right: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 10px;
+      opacity: 0.55;
+    }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Hint */
+    #hint {
+      position: absolute;
+      bottom: 22px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.3;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    /* ── Planet info panel ─────────────────────────── */
+    #planet-info {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translate(110%, -50%);
+      width: 310px;
+      background: rgba(4, 8, 20, 0.92);
+      border: 1px solid rgba(100, 160, 255, 0.15);
+      border-right: none;
+      border-radius: 12px 0 0 12px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      pointer-events: all;
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    #planet-info.visible {
+      transform: translate(0%, -50%);
+    }
+
+    /* Color accent bar */
+    #pi-color-bar {
+      height: 3px;
+      width: 100%;
+    }
+
+    /* Close button */
+    #pi-close {
+      position: absolute;
+      top: 14px; right: 14px;
+      width: 20px; height: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      background: none;
+      color: rgba(255,255,255,0.45);
+      font-size: 13px;
+      line-height: 18px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    #pi-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* Header */
+    .pi-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    #pi-type {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-bottom: 4px;
+    }
+    #pi-name {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+      color: #e8f0ff;
+    }
+    #pi-subtitle {
+      font-size: 11px;
+      opacity: 0.45;
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    /* Scrollable body */
+    .pi-body {
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100,160,255,0.3) transparent;
+    }
+    .pi-body::-webkit-scrollbar { width: 3px; }
+    .pi-body::-webkit-scrollbar-thumb { background: rgba(100,160,255,0.3); border-radius: 2px; }
+
+    /* Sections */
+    .pi-section {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .pi-section-title {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.35;
+      margin-bottom: 8px;
+    }
+
+    /* Stats grid */
+    .pi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+    }
+    .pi-stat-label {
+      font-size: 10px;
+      opacity: 0.45;
+      margin-bottom: 1px;
+      letter-spacing: 0.5px;
+    }
+    .pi-stat-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: #b8d4ff;
+    }
+
+    /* Temperature bar */
+    .pi-temp-bar-wrap {
+      position: relative;
+      height: 6px;
+      background: linear-gradient(to right, #1a4fff, #22cc88, #ff8800, #ff2200);
+      border-radius: 3px;
+      margin: 6px 0 4px;
+    }
+    #pi-temp-marker {
+      position: absolute;
+      top: -3px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid rgba(0,0,0,0.6);
+      transform: translateX(-50%);
+      transition: left 0.3s;
+    }
+    .pi-temp-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      opacity: 0.45;
+    }
+    #pi-temp-avg {
+      text-align: center;
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 2px;
+      color: #aac4ff;
+    }
+
+    /* Atmosphere */
+    #pi-atmo { font-size: 12px; color: #b8d4ff; margin-bottom: 3px; }
+    #pi-atmo-detail { font-size: 10px; opacity: 0.45; font-family: monospace; }
+    #pi-magnetic { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+
+    /* Fun facts */
+    #pi-facts {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    #pi-facts li {
+      font-size: 11px;
+      line-height: 1.5;
+      opacity: 0.7;
+      padding-left: 14px;
+      position: relative;
+    }
+    #pi-facts li::before {
+      content: '›';
+      position: absolute;
+      left: 2px;
+      color: #5590ff;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    /* Fallback notice */
+    #fallback {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px 28px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div id="title">Solar System · WebGPU</div>
+
+    <!-- ── Rich planet info panel ───────────────────── -->
+    <div id="planet-info">
+      <div id="pi-color-bar"></div>
+      <button id="pi-close" title="Close">✕</button>
+
+      <div class="pi-header">
+        <div id="pi-type"></div>
+        <div id="pi-name"></div>
+        <div id="pi-subtitle"></div>
+      </div>
+
+      <div class="pi-body">
+
+        <!-- Orbital -->
+        <div class="pi-section">
+          <div class="pi-section-title">Orbital Data</div>
+          <div class="pi-grid">
+            <div>
+              <div class="pi-stat-label">Diameter</div>
+              <div class="pi-stat-value" id="pi-diam"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Distance from Sun</div>
+              <div class="pi-stat-value" id="pi-dist"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Orbital Period</div>
+              <div class="pi-stat-value" id="pi-period"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Known Moons</div>
+              <div class="pi-stat-value" id="pi-moons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Physical -->
+        <div class="pi-section">
+          <div class="pi-section-title">Physical Properties</div>
+          <div class="pi-grid">
+            <div>
+              <div class="pi-stat-label">Surface Gravity</div>
+              <div class="pi-stat-value" id="pi-gravity"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Density</div>
+              <div class="pi-stat-value" id="pi-density"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Escape Velocity</div>
+              <div class="pi-stat-value" id="pi-escape"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Day Length</div>
+              <div class="pi-stat-value" id="pi-rotation"></div>
+            </div>
+            <div>
+              <div class="pi-stat-label">Axial Tilt</div>
+              <div class="pi-stat-value" id="pi-tilt"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Temperature -->
+        <div class="pi-section">
+          <div class="pi-section-title">Surface Temperature</div>
+          <div class="pi-temp-bar-wrap">
+            <div id="pi-temp-marker"></div>
+          </div>
+          <div class="pi-temp-labels">
+            <span id="pi-temp-min"></span>
+            <span id="pi-temp-max"></span>
+          </div>
+          <div id="pi-temp-avg"></div>
+        </div>
+
+        <!-- Atmosphere -->
+        <div class="pi-section">
+          <div class="pi-section-title">Atmosphere &amp; Magnetism</div>
+          <div id="pi-atmo"></div>
+          <div id="pi-atmo-detail"></div>
+          <div id="pi-magnetic"></div>
+        </div>
+
+        <!-- Facts -->
+        <div class="pi-section">
+          <div class="pi-section-title">Did You Know?</div>
+          <ul id="pi-facts"></ul>
+        </div>
+
+      </div><!-- /pi-body -->
+    </div><!-- /planet-info -->
+
+    <!-- Controls -->
+    <div id="controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">TIME SPEED</span>
+        <input id="speed-slider" type="range" min="0" max="5" step="0.01" value="1" />
+        <span id="speed-val">1×</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">ORBITS</span>
+        <input id="orbits-toggle" type="range" min="0" max="1" step="1" value="1" />
+        <span id="orbits-val">ON</span>
+      </div>
+    </div>
+
+    <div id="legend"></div>
+    <div id="hint">SCROLL · DRAG · HOVER planet · CLICK for details</div>
+  </div>
+
+  <div id="fallback">
+    <p>⚠️ WebGPU not available — using WebGL fallback</p>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script>
+    // Close button
+    document.getElementById('pi-close').addEventListener('click', () => {
+      document.getElementById('planet-info').classList.remove('visible');
+    });
+  </script>
+</body>
+</html>
