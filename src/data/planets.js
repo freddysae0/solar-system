@@ -2,9 +2,9 @@
  * Solar System planet data — full dataset
  */
 
-export const DIST_SCALE  = 12;      // 1 AU = 12 scene units
-export const SIZE_SCALE  = 0.00022; // km → scene units (exaggerated ~2.5× for visibility)
-export const SUN_RADIUS  = 2.2;
+export const DIST_SCALE  = 160;     // 1 AU = 160 scene units
+export const SIZE_SCALE  = 0.00006; // km → scene units  (same scale applied to ALL bodies)
+export const SUN_RADIUS  = 695_700 * SIZE_SCALE; // ~41.74 — computed, not hardcoded
 
 export const PLANET_DATA = [
   {
@@ -113,6 +113,26 @@ export const PLANET_DATA = [
       'Earth\'s magnetic field deflects harmful solar particles',
       'Home to over 8.7 million known species',
     ],
+    moonData: [
+      {
+        name: 'Moon', parentName: 'Earth',
+        type: 'Natural Satellite', subtitle: 'Earth\'s only natural satellite',
+        radiusKm: 1_737.4, distancePlanetKm: 384_400,
+        periodDays: 27.32, eccentricity: 0.055, inclinationDeg: 5.14,
+        color: 0x9a9690, roughness: 0.95, metalness: 0.02,
+        gravityG: 0.17, density: 3.35, escapeVelKms: 2.4,
+        rotationDays: 27.32, axialTiltDeg: 6.68,
+        tempMin: -173, tempAvg: -23, tempMax: 127,
+        atmosphere: 'None (exosphere only)',
+        magneticField: 'None',
+        facts: [
+          'The only extraterrestrial body humans have walked on',
+          'Tidally locked — always shows the same face to Earth',
+          'Stabilises Earth\'s axial tilt, regulating our seasons',
+          'Formed ~4.5 billion years ago from a giant impact with Earth',
+        ],
+      },
+    ],
   },
   {
     name:           'Mars',
@@ -146,6 +166,36 @@ export const PLANET_DATA = [
       'A Martian day (sol) is 24h 37min — very close to Earth\'s',
       'Its two moons (Phobos & Deimos) are likely captured asteroids',
       'Water once flowed on the Martian surface',
+    ],
+    moonData: [
+      {
+        name: 'Phobos', parentName: 'Mars',
+        type: 'Natural Satellite', subtitle: 'Doomed moon of Mars',
+        radiusKm: 11.1, distancePlanetKm: 9_376,
+        periodDays: 0.319, eccentricity: 0.015, inclinationDeg: 1.08,
+        color: 0x8a7860, roughness: 0.95, metalness: 0.02,
+        tempMin: -112, tempAvg: -40, tempMax: 25,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Orbits Mars faster than Mars rotates — rises in the west, sets in the east',
+          'Will crash into Mars or break apart in ~50 million years due to tidal forces',
+          'Covered in a thick layer of dust and large craters',
+        ],
+      },
+      {
+        name: 'Deimos', parentName: 'Mars',
+        type: 'Natural Satellite', subtitle: 'The outer moon of Mars',
+        radiusKm: 6.2, distancePlanetKm: 23_463,
+        periodDays: 1.263, eccentricity: 0.0003, inclinationDeg: 0.93,
+        color: 0x8a7860, roughness: 0.95, metalness: 0.02,
+        tempMin: -120, tempAvg: -40, tempMax: 25,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Named after the Greek god of dread and terror',
+          'One of the smallest known moons in the Solar System',
+          'Has a very smooth surface, with craters largely filled with fine regolith',
+        ],
+      },
     ],
   },
   {
@@ -182,6 +232,81 @@ export const PLANET_DATA = [
       'Has at least 95 known moons',
       'Its magnetic field extends to Saturn\'s orbit',
       'Fastest-rotating planet — a day is only ~10 hours',
+    ],
+    moonData: [
+      {
+        name: 'Io', parentName: 'Jupiter',
+        type: 'Galilean Moon', subtitle: 'The volcanic world',
+        radiusKm: 1_821.6, distancePlanetKm: 421_700,
+        periodDays: 1.769, eccentricity: 0.004, inclinationDeg: 0.04,
+        color: 0xd4a030, roughness: 0.7, metalness: 0.0,
+        gravityG: 0.18, density: 3.53, escapeVelKms: 2.6,
+        tempMin: -143, tempAvg: -100, tempMax: 1600,
+        atmosphere: 'Thin SO₂', magneticField: 'None',
+        facts: [
+          'Most volcanically active body in the Solar System',
+          'Has over 400 active volcanoes — eruptions can reach 500 km high',
+          'Constantly resurfaced by lava, erasing impact craters',
+        ],
+      },
+      {
+        name: 'Europa', parentName: 'Jupiter',
+        type: 'Galilean Moon', subtitle: 'The ocean world',
+        radiusKm: 1_560.8, distancePlanetKm: 671_100,
+        periodDays: 3.551, eccentricity: 0.009, inclinationDeg: 0.47,
+        color: 0xc8b090, roughness: 0.6, metalness: 0.0,
+        gravityG: 0.13, density: 3.01, escapeVelKms: 2.0,
+        tempMin: -220, tempAvg: -160, tempMax: -120,
+        atmosphere: 'Thin O₂', magneticField: 'Induced',
+        facts: [
+          'Has a global liquid water ocean under its icy crust',
+          'Top candidate for extraterrestrial life in the Solar System',
+          'Its ocean may contain twice as much water as all Earth\'s oceans',
+        ],
+      },
+      {
+        name: 'Ganymede', parentName: 'Jupiter',
+        type: 'Galilean Moon', subtitle: 'Largest moon in the Solar System',
+        radiusKm: 2_634.1, distancePlanetKm: 1_070_400,
+        periodDays: 7.155, eccentricity: 0.001, inclinationDeg: 0.18,
+        color: 0x8a7a6a, roughness: 0.85, metalness: 0.05,
+        gravityG: 0.15, density: 1.94, escapeVelKms: 2.7,
+        tempMin: -203, tempAvg: -163, tempMax: -121,
+        atmosphere: 'Thin O₂', magneticField: 'Yes — unique among moons',
+        facts: [
+          'Larger than the planet Mercury',
+          'The only moon in the Solar System with its own magnetic field',
+          'Has a subsurface saltwater ocean beneath 800 km of ice',
+        ],
+      },
+      {
+        name: 'Callisto', parentName: 'Jupiter',
+        type: 'Galilean Moon', subtitle: 'The ancient, cratered world',
+        radiusKm: 2_410.3, distancePlanetKm: 1_882_700,
+        periodDays: 16.69, eccentricity: 0.007, inclinationDeg: 0.19,
+        color: 0x6a6055, roughness: 0.9, metalness: 0.02,
+        gravityG: 0.13, density: 1.83, escapeVelKms: 2.4,
+        tempMin: -193, tempAvg: -139, tempMax: -108,
+        atmosphere: 'Thin CO₂', magneticField: 'None',
+        facts: [
+          'Most heavily cratered object in the Solar System',
+          'Barely affected by Jupiter\'s tidal forces — geologically dead',
+          'May also hide a subsurface liquid water ocean',
+        ],
+      },
+      {
+        name: 'Amalthea', parentName: 'Jupiter',
+        type: 'Inner Moon', subtitle: 'Jupiter\'s red inner moon',
+        radiusKm: 83.5, distancePlanetKm: 181_365,
+        periodDays: 0.498, eccentricity: 0.003, inclinationDeg: 0.37,
+        color: 0xa04830, roughness: 0.9, metalness: 0.02,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Radiates more heat than it receives from the Sun',
+          'Irregularly shaped, heavily cratered red body',
+          'Orbits inside the main ring of Jupiter',
+        ],
+      },
     ],
   },
   {
@@ -221,6 +346,118 @@ export const PLANET_DATA = [
       'Has 146 known moons — the most of any planet',
       'Winds can reach 1,800 km/h at the equator',
     ],
+    moonData: [
+      {
+        name: 'Titan', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The orange moon with a thick atmosphere',
+        radiusKm: 2_574.7, distancePlanetKm: 1_221_870,
+        periodDays: 15.95, eccentricity: 0.029, inclinationDeg: 0.35,
+        color: 0xc89040, roughness: 0.7, metalness: 0.0,
+        gravityG: 0.14, density: 1.88, escapeVelKms: 2.6,
+        tempMin: -179, tempAvg: -179, tempMax: -173,
+        atmosphere: 'Dense N₂/CH₄', magneticField: 'None',
+        facts: [
+          'The only moon with a dense atmosphere and surface liquid (methane lakes)',
+          'Larger than the planet Mercury',
+          'Surface hidden by orange haze — revealed by the Huygens probe in 2005',
+        ],
+      },
+      {
+        name: 'Rhea', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'Saturn\'s second largest moon',
+        radiusKm: 763.8, distancePlanetKm: 527_040,
+        periodDays: 4.518, eccentricity: 0.001, inclinationDeg: 0.35,
+        color: 0xcccccc, roughness: 0.88, metalness: 0.0,
+        tempMin: -220, tempAvg: -181, tempMax: -174,
+        atmosphere: 'Thin O₂/CO₂', magneticField: 'None',
+        facts: [
+          'Possibly has a thin, tenuous oxygen atmosphere',
+          'Has a two-toned appearance — bright on one side, dark on the other',
+        ],
+      },
+      {
+        name: 'Dione', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The icy sculpted moon',
+        radiusKm: 561.4, distancePlanetKm: 377_400,
+        periodDays: 2.737, eccentricity: 0.002, inclinationDeg: 0.02,
+        color: 0xbbbbcc, roughness: 0.88, metalness: 0.0,
+        tempMin: -213, tempAvg: -186, tempMax: -163,
+        atmosphere: 'Trace O₂', magneticField: 'None',
+        facts: [
+          'Shows evidence of past tectonic activity with ice cliffs',
+          'May have a subsurface ocean beneath its icy crust',
+        ],
+      },
+      {
+        name: 'Tethys', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The canyon moon',
+        radiusKm: 531.1, distancePlanetKm: 294_660,
+        periodDays: 1.888, eccentricity: 0.0001, inclinationDeg: 0.17,
+        color: 0xdddddd, roughness: 0.85, metalness: 0.0,
+        tempMin: -227, tempAvg: -187, tempMax: -153,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Has a canyon system (Ithaca Chasma) 2,000 km long',
+          'One of the most reflective bodies in the Solar System',
+        ],
+      },
+      {
+        name: 'Enceladus', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The geyser world',
+        radiusKm: 252.1, distancePlanetKm: 238_020,
+        periodDays: 1.370, eccentricity: 0.005, inclinationDeg: 0.02,
+        color: 0xeef0ff, roughness: 0.4, metalness: 0.0,
+        gravityG: 0.01, density: 1.61, escapeVelKms: 0.24,
+        tempMin: -240, tempAvg: -200, tempMax: -128,
+        atmosphere: 'Water vapour plumes', magneticField: 'None',
+        facts: [
+          'Shoots plumes of water vapour 500 km into space from its south pole',
+          'Has a global liquid water ocean under its icy crust',
+          'One of the best candidates for extraterrestrial life in the Solar System',
+        ],
+      },
+      {
+        name: 'Mimas', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The Death Star moon',
+        radiusKm: 198.2, distancePlanetKm: 185_520,
+        periodDays: 0.942, eccentricity: 0.020, inclinationDeg: 1.57,
+        color: 0xaaaaaa, roughness: 0.9, metalness: 0.0,
+        tempMin: -209, tempAvg: -200, tempMax: -196,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'The massive Herschel Crater gives it a striking resemblance to the Death Star',
+          'The smallest and innermost of Saturn\'s major moons',
+          'Despite being icy, it shows little sign of geological activity',
+        ],
+      },
+      {
+        name: 'Iapetus', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The yin-yang moon',
+        radiusKm: 734.5, distancePlanetKm: 3_560_820,
+        periodDays: 79.33, eccentricity: 0.029, inclinationDeg: 15.47,
+        color: 0x887766, roughness: 0.9, metalness: 0.0,
+        tempMin: -238, tempAvg: -170, tempMax: -143,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Dramatically two-toned — one hemisphere is jet black, the other snow white',
+          'Has a mysterious equatorial mountain ridge up to 20 km high',
+          'Orbits far from Saturn on a steeply inclined path',
+        ],
+      },
+      {
+        name: 'Hyperion', parentName: 'Saturn',
+        type: 'Natural Satellite', subtitle: 'The sponge moon',
+        radiusKm: 135.0, distancePlanetKm: 1_481_000,
+        periodDays: 21.28, eccentricity: 0.123, inclinationDeg: 0.43,
+        color: 0x8a7060, roughness: 0.95, metalness: 0.0,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Has a chaotic, tumbling rotation — no fixed day length',
+          'Its sponge-like surface has an unusually low density',
+          'Largest known irregularly shaped moon in the Solar System',
+        ],
+      },
+    ],
   },
   {
     name:           'Uranus',
@@ -259,6 +496,79 @@ export const PLANET_DATA = [
       'Its 27 moons are named after Shakespeare and Alexander Pope characters',
       'It was the first planet discovered with a telescope (1781)',
     ],
+    moonData: [
+      {
+        name: 'Miranda', parentName: 'Uranus',
+        type: 'Natural Satellite', subtitle: 'The patchwork moon',
+        radiusKm: 235.8, distancePlanetKm: 129_390,
+        periodDays: 1.413, eccentricity: 0.002, inclinationDeg: 4.34,
+        color: 0x9090a0, roughness: 0.88, metalness: 0.0,
+        tempMin: -223, tempAvg: -187, tempMax: -158,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Has Verona Rupes, the tallest known cliff in the Solar System (20 km)',
+          'Bizarre patchwork terrain suggests violent geological history',
+          'Named after a character in Shakespeare\'s "The Tempest"',
+        ],
+      },
+      {
+        name: 'Ariel', parentName: 'Uranus',
+        type: 'Natural Satellite', subtitle: 'Uranus\'s brightest moon',
+        radiusKm: 578.9, distancePlanetKm: 191_020,
+        periodDays: 2.520, eccentricity: 0.001, inclinationDeg: 0.26,
+        color: 0xb0b0c0, roughness: 0.8, metalness: 0.0,
+        tempMin: -213, tempAvg: -187, tempMax: -163,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'The brightest of Uranus\'s moons',
+          'Features extensive valleys and canyons formed by tectonic activity',
+          'Named after a spirit in Shakespeare\'s "The Tempest"',
+        ],
+      },
+      {
+        name: 'Umbriel', parentName: 'Uranus',
+        type: 'Natural Satellite', subtitle: 'The dark moon',
+        radiusKm: 584.7, distancePlanetKm: 266_300,
+        periodDays: 4.144, eccentricity: 0.004, inclinationDeg: 0.13,
+        color: 0x606070, roughness: 0.95, metalness: 0.0,
+        tempMin: -213, tempAvg: -187, tempMax: -163,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'One of the darkest moons orbiting Uranus',
+          'Named after a dusky melancholy spirit in Alexander Pope\'s poem',
+          'Has a mysterious bright ring on its floor called "Wunda"',
+        ],
+      },
+      {
+        name: 'Titania', parentName: 'Uranus',
+        type: 'Natural Satellite', subtitle: 'Largest moon of Uranus',
+        radiusKm: 788.9, distancePlanetKm: 435_910,
+        periodDays: 8.706, eccentricity: 0.001, inclinationDeg: 0.08,
+        color: 0x9090a8, roughness: 0.85, metalness: 0.0,
+        gravityG: 0.04, density: 1.71, escapeVelKms: 0.77,
+        tempMin: -213, tempAvg: -187, tempMax: -163,
+        atmosphere: 'Trace CO₂', magneticField: 'None',
+        facts: [
+          'Largest moon of Uranus',
+          'Named after the queen of the fairies in Shakespeare\'s "A Midsummer Night\'s Dream"',
+          'Has a system of large fault scarps and canyons',
+        ],
+      },
+      {
+        name: 'Oberon', parentName: 'Uranus',
+        type: 'Natural Satellite', subtitle: 'Outermost large moon of Uranus',
+        radiusKm: 761.4, distancePlanetKm: 583_520,
+        periodDays: 13.46, eccentricity: 0.001, inclinationDeg: 0.07,
+        color: 0x807878, roughness: 0.88, metalness: 0.0,
+        tempMin: -213, tempAvg: -187, tempMax: -163,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Named after the king of the fairies in Shakespeare\'s "A Midsummer Night\'s Dream"',
+          'Heavily cratered ancient surface with some signs of past activity',
+          'A large mountain ~6 km high has been detected on its limb',
+        ],
+      },
+    ],
   },
   {
     name:           'Neptune',
@@ -293,6 +603,37 @@ export const PLANET_DATA = [
       'Its largest moon Triton orbits backwards (retrograde)',
       'The Great Dark Spot — a storm the size of Earth — comes and goes',
     ],
+    moonData: [
+      {
+        name: 'Triton', parentName: 'Neptune',
+        type: 'Natural Satellite', subtitle: 'The backwards moon',
+        radiusKm: 1_353.4, distancePlanetKm: 354_759,
+        periodDays: -5.877, eccentricity: 0.000, inclinationDeg: 156.9,
+        color: 0xa0b8c8, roughness: 0.7, metalness: 0.0,
+        gravityG: 0.08, density: 2.06, escapeVelKms: 1.45,
+        tempMin: -235, tempAvg: -235, tempMax: -233,
+        atmosphere: 'Thin N₂', magneticField: 'None',
+        facts: [
+          'The only large moon in the Solar System that orbits in the opposite direction to its planet\'s rotation',
+          'Likely a captured Kuiper Belt Object — a cousin of Pluto',
+          'Has active nitrogen geysers shooting plumes 8 km high',
+          'Will be torn apart by Neptune\'s gravity in about 3.6 billion years',
+        ],
+      },
+      {
+        name: 'Nereid', parentName: 'Neptune',
+        type: 'Natural Satellite', subtitle: 'Neptune\'s eccentric moon',
+        radiusKm: 170.0, distancePlanetKm: 5_513_400,
+        periodDays: 360.14, eccentricity: 0.751, inclinationDeg: 7.23,
+        color: 0x9090a0, roughness: 0.9, metalness: 0.0,
+        atmosphere: 'None', magneticField: 'None',
+        facts: [
+          'Has one of the most eccentric orbits of any moon — highly elongated',
+          'Its extreme orbit suggests it was perturbed when Triton was captured',
+          'Takes nearly a year (Earth year) to orbit Neptune once',
+        ],
+      },
+    ],
   },
 ];
 
@@ -305,3 +646,35 @@ export const ASTEROID_BELT = {
 };
 
 export const METEOR_COUNT = 12;
+
+// ─── Sun data (used for info panel when Sun is clicked) ──────────────────────
+export const SUN_DATA = {
+  name:            'Sun',
+  type:            'G-Type Main-Sequence Star',
+  subtitle:        'Heart of the Solar System',
+  radiusKm:        695_700,
+  distanceAU:      0,
+  periodDays:      null,
+  color:           0xffb020,
+  emissive:        0xffb020,
+  moons:           0,
+  rings:           false,
+  gravityG:        27.94,
+  density:         1.41,
+  escapeVelKms:    617.5,
+  rotationDays:    25.05,       // equatorial sidereal rotation (Earth days)
+  axialTiltDeg:    7.25,
+  tempMin:         4_400,       // sunspot umbra (photosphere low)
+  tempAvg:         5_500,       // photosphere average
+  tempMax:         6_000,       // granule peaks
+  atmosphere:      'Photosphere, chromosphere & corona',
+  atmoDetail:      'H 73.4% · He 24.9% · O 0.77% · C 0.29%',
+  magneticField:   'Extremely strong — shapes the heliosphere and solar wind',
+  facts: [
+    'Contains 99.86% of all mass in the Solar System',
+    'Core temperature reaches 15,000,000 °C — hot enough for nuclear fusion',
+    '1.3 million Earths could fit inside the Sun',
+    'Light takes 8 minutes 20 seconds to travel from here to Earth',
+    'The Sun will become a red giant in approximately 5 billion years',
+  ],
+};

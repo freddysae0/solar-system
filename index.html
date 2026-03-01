@@ -12,279 +12,397 @@
       overflow: hidden;
       font-family: 'Segoe UI', system-ui, sans-serif;
       color: #d0dcf0;
+      -webkit-tap-highlight-color: transparent;
     }
     canvas { display: block; }
 
     /* ── HUD overlay ───────────────────────────────── */
-    #hud {
+    #hud { position: fixed; inset: 0; pointer-events: none; }
+
+    /* ── Mobile hamburger ──────────────────────────── */
+    #menu-btn {
+      display: none;
+      position: absolute;
+      top: 14px; left: 14px;
+      width: 36px; height: 36px;
+      background: rgba(4,8,20,0.80);
+      border: 1px solid rgba(100,160,255,0.18);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 16px;
+      cursor: pointer;
+      align-items: center; justify-content: center;
+      pointer-events: all;
+      z-index: 30;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ── Sidebar backdrop (mobile) ─────────────────── */
+    #sb-overlay {
+      display: none;
       position: fixed;
       inset: 0;
-      pointer-events: none;
+      background: rgba(0,0,0,0.5);
+      z-index: 25;
+      pointer-events: all;
     }
 
-    /* Title */
-    #title {
+    /* ── Left sidebar ──────────────────────────────── */
+    #sidebar {
       position: absolute;
-      top: 20px; left: 22px;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      opacity: 0.45;
-    }
-
-    /* Bottom controls */
-    #controls {
-      position: absolute;
-      bottom: 22px; left: 22px;
+      top: 0; left: 0;
+      width: 230px;
+      height: 100vh;
+      background: rgba(4, 8, 20, 0.88);
+      border-right: 1px solid rgba(100, 160, 255, 0.10);
+      backdrop-filter: blur(14px);
       pointer-events: all;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      z-index: 28;
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
     }
-    .ctrl-row {
+    #sidebar.collapsed { transform: translateX(-190px); }
+
+    /* ── Sidebar header ────────────────────────────── */
+    #sb-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 11px;
-      letter-spacing: 1px;
-      opacity: 0.7;
+      justify-content: space-between;
+      padding: 18px 10px 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
     }
-    .ctrl-label { width: 90px; }
+    #sb-title-wrap { display: flex; flex-direction: column; }
+    #sb-title { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.5; }
+    #sb-badge { font-size: 9px; letter-spacing: 1px; opacity: 0.3; margin-top: 2px; }
+
+    #sb-collapse {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.4);
+      width: 26px; height: 26px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s, transform 0.28s;
+      flex-shrink: 0;
+    }
+    #sb-collapse:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    #sidebar.collapsed #sb-collapse { transform: rotate(180deg); }
+
+    /* ── Search ────────────────────────────────────── */
+    #sb-search-wrap { padding: 10px 10px 8px; flex-shrink: 0; }
+    #sb-search {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: #d0dcf0;
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+      letter-spacing: 0.3px;
+      transition: border-color 0.15s;
+    }
+    #sb-search:focus { border-color: rgba(100,160,255,0.4); }
+    #sb-search::placeholder { opacity: 0.3; }
+
+    /* ── Body list ─────────────────────────────────── */
+    #sb-list {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100,160,255,0.2) transparent;
+      padding: 2px 0 4px;
+    }
+    #sb-list::-webkit-scrollbar { width: 3px; }
+    #sb-list::-webkit-scrollbar-thumb { background: rgba(100,160,255,0.2); border-radius: 2px; }
+
+    .sb-planet-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px 7px 14px;
+      cursor: pointer; transition: background 0.12s;
+      user-select: none; white-space: nowrap;
+      min-height: 36px;
+    }
+    .sb-planet-row:hover { background: rgba(255,255,255,0.05); }
+    .sb-planet-row.active { background: rgba(100,160,255,0.11); }
+    .sb-planet-row.sb-hidden { display: none; }
+
+    .sb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .sb-planet-name { font-size: 12px; letter-spacing: 0.4px; flex: 1; opacity: 0.72; }
+
+    .sb-expand-btn {
+      background: none; border: none;
+      color: rgba(255,255,255,0.28);
+      font-size: 11px; line-height: 1;
+      cursor: pointer; padding: 4px 6px;
+      border-radius: 3px;
+      transition: color 0.12s, transform 0.18s;
+      flex-shrink: 0;
+    }
+    .sb-expand-btn.open { transform: rotate(90deg); }
+    .sb-expand-btn:hover { color: rgba(255,255,255,0.7); }
+
+    .sb-moon-list { display: none; flex-direction: column; }
+    .sb-moon-list.open { display: flex; }
+
+    .sb-moon-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 10px 5px 30px;
+      cursor: pointer; transition: background 0.12s;
+      user-select: none; white-space: nowrap;
+      min-height: 32px;
+    }
+    .sb-moon-row:hover { background: rgba(255,255,255,0.04); }
+    .sb-moon-row.active { background: rgba(100,160,255,0.09); }
+    .sb-moon-row.sb-hidden { display: none; }
+
+    .sb-moon-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: rgba(180,200,255,0.35); flex-shrink: 0;
+    }
+    .sb-moon-name { font-size: 11px; opacity: 0.48; letter-spacing: 0.2px; }
+
+    /* ── Sidebar footer (controls) ─────────────────── */
+    #sb-footer {
+      flex-shrink: 0;
+      padding: 10px 14px 18px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .ctrl-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; letter-spacing: 1px;
+      opacity: 0.65; margin-bottom: 7px;
+    }
+    .ctrl-label { width: 82px; font-size: 10px; }
     input[type=range] {
       -webkit-appearance: none;
-      width: 130px; height: 2px;
+      flex: 1; height: 2px;
       background: rgba(255,255,255,0.18);
-      border-radius: 2px;
-      outline: none;
+      border-radius: 2px; outline: none;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 11px; height: 11px;
-      border-radius: 50%;
-      background: #7eb8ff;
-      cursor: pointer;
+      width: 13px; height: 13px;
+      border-radius: 50%; background: #7eb8ff; cursor: pointer;
     }
-    #speed-val { width: 40px; text-align: right; font-size: 10px; opacity: 0.55; }
+    .ctrl-val { width: 36px; text-align: right; font-size: 10px; opacity: 0.55; }
 
-    /* Legend */
-    #legend {
-      position: absolute;
-      bottom: 22px; right: 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 10px;
-      opacity: 0.55;
+    .ctrl-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 8px 0; }
+
+    .ctrl-keys { display: flex; flex-direction: column; gap: 5px; }
+    .key-row { display: flex; align-items: center; gap: 10px; }
+    kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 20px; height: 20px; padding: 0 5px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-bottom-width: 2px; border-radius: 4px;
+      font-family: inherit; font-size: 9px;
+      letter-spacing: 0.5px; color: rgba(255,255,255,0.7);
     }
-    .legend-item { display: flex; align-items: center; gap: 7px; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    kbd.key-wide { min-width: 52px; }
+    .key-cluster { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+    .key-cluster-top { display: flex; }
+    .key-cluster-mid { display: flex; gap: 2px; }
+    .key-desc { font-size: 10px; opacity: 0.4; letter-spacing: 0.5px; }
 
-    /* Hint */
+    /* ── Hint ──────────────────────────────────────── */
     #hint {
-      position: absolute;
-      bottom: 22px; left: 50%;
+      position: absolute; bottom: 18px; left: 50%;
       transform: translateX(-50%);
-      font-size: 10px;
-      opacity: 0.3;
-      letter-spacing: 1px;
-      white-space: nowrap;
+      font-size: 10px; opacity: 0.22; letter-spacing: 1px;
+      white-space: nowrap; pointer-events: none;
     }
 
-    /* ── Planet info panel ─────────────────────────── */
+    /* ── Planet / Moon info panel ──────────────────── */
     #planet-info {
-      position: absolute;
-      top: 50%;
-      right: 0;
+      position: absolute; top: 50%; right: 0;
       transform: translate(110%, -50%);
       width: 310px;
-      background: rgba(4, 8, 20, 0.92);
+      background: rgba(4, 8, 20, 0.93);
       border: 1px solid rgba(100, 160, 255, 0.15);
-      border-right: none;
-      border-radius: 12px 0 0 12px;
-      overflow: hidden;
-      backdrop-filter: blur(12px);
+      border-right: none; border-radius: 12px 0 0 12px;
+      overflow: hidden; backdrop-filter: blur(14px);
       pointer-events: all;
       transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
-      will-change: transform;
+      will-change: transform; z-index: 15;
     }
-    #planet-info.visible {
-      transform: translate(0%, -50%);
-    }
+    #planet-info.visible { transform: translate(0%, -50%); }
 
-    /* Color accent bar */
-    #pi-color-bar {
-      height: 3px;
-      width: 100%;
-    }
-
-    /* Close button */
+    #pi-color-bar { height: 3px; width: 100%; }
     #pi-close {
-      position: absolute;
-      top: 14px; right: 14px;
-      width: 20px; height: 20px;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 50%;
-      background: none;
-      color: rgba(255,255,255,0.45);
-      font-size: 13px;
-      line-height: 18px;
-      text-align: center;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute; top: 14px; right: 14px;
+      width: 22px; height: 22px;
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 50%;
+      background: none; color: rgba(255,255,255,0.45);
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
     }
     #pi-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-    /* Header */
-    .pi-header {
-      padding: 16px 20px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    #pi-type {
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      opacity: 0.45;
-      margin-bottom: 4px;
-    }
-    #pi-name {
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      line-height: 1.1;
-      color: #e8f0ff;
-    }
-    #pi-subtitle {
-      font-size: 11px;
-      opacity: 0.45;
-      margin-top: 2px;
-      font-style: italic;
-    }
+    .pi-header { padding: 16px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    #pi-type { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.45; margin-bottom: 4px; }
+    #pi-name { font-size: 26px; font-weight: 600; letter-spacing: 0.5px; line-height: 1.1; color: #e8f0ff; }
+    #pi-subtitle { font-size: 11px; opacity: 0.45; margin-top: 2px; font-style: italic; }
 
-    /* Scrollable body */
     .pi-body {
-      max-height: calc(100vh - 200px);
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(100,160,255,0.3) transparent;
+      max-height: calc(100vh - 200px); overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: rgba(100,160,255,0.3) transparent;
     }
     .pi-body::-webkit-scrollbar { width: 3px; }
     .pi-body::-webkit-scrollbar-thumb { background: rgba(100,160,255,0.3); border-radius: 2px; }
 
-    /* Sections */
-    .pi-section {
-      padding: 12px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .pi-section-title {
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      opacity: 0.35;
-      margin-bottom: 8px;
-    }
+    .pi-section { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .pi-section-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.35; margin-bottom: 8px; }
+    .pi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    .pi-stat-label { font-size: 10px; opacity: 0.45; margin-bottom: 1px; letter-spacing: 0.5px; }
+    .pi-stat-value { font-size: 13px; font-weight: 500; color: #b8d4ff; }
 
-    /* Stats grid */
-    .pi-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px 12px;
-    }
-    .pi-stat-label {
-      font-size: 10px;
-      opacity: 0.45;
-      margin-bottom: 1px;
-      letter-spacing: 0.5px;
-    }
-    .pi-stat-value {
-      font-size: 13px;
-      font-weight: 500;
-      color: #b8d4ff;
-    }
-
-    /* Temperature bar */
     .pi-temp-bar-wrap {
-      position: relative;
-      height: 6px;
+      position: relative; height: 6px;
       background: linear-gradient(to right, #1a4fff, #22cc88, #ff8800, #ff2200);
-      border-radius: 3px;
-      margin: 6px 0 4px;
+      border-radius: 3px; margin: 6px 0 4px;
     }
     #pi-temp-marker {
-      position: absolute;
-      top: -3px;
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: #fff;
-      border: 2px solid rgba(0,0,0,0.6);
-      transform: translateX(-50%);
-      transition: left 0.3s;
+      position: absolute; top: -3px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; border: 2px solid rgba(0,0,0,0.6);
+      transform: translateX(-50%); transition: left 0.3s;
     }
-    .pi-temp-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 9px;
-      opacity: 0.45;
-    }
-    #pi-temp-avg {
-      text-align: center;
-      font-size: 10px;
-      opacity: 0.6;
-      margin-top: 2px;
-      color: #aac4ff;
-    }
-
-    /* Atmosphere */
+    .pi-temp-labels { display: flex; justify-content: space-between; font-size: 9px; opacity: 0.45; }
+    #pi-temp-avg { text-align: center; font-size: 10px; opacity: 0.6; margin-top: 2px; color: #aac4ff; }
     #pi-atmo { font-size: 12px; color: #b8d4ff; margin-bottom: 3px; }
     #pi-atmo-detail { font-size: 10px; opacity: 0.45; font-family: monospace; }
     #pi-magnetic { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+    #pi-facts { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    #pi-facts li { font-size: 11px; line-height: 1.5; opacity: 0.7; padding-left: 14px; position: relative; }
+    #pi-facts li::before { content: '›'; position: absolute; left: 2px; color: #5590ff; font-size: 14px; line-height: 1.2; }
 
-    /* Fun facts */
-    #pi-facts {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    #pi-facts li {
-      font-size: 11px;
-      line-height: 1.5;
-      opacity: 0.7;
-      padding-left: 14px;
-      position: relative;
-    }
-    #pi-facts li::before {
-      content: '›';
-      position: absolute;
-      left: 2px;
-      color: #5590ff;
-      font-size: 14px;
-      line-height: 1.2;
-    }
-
-    /* Fallback notice */
+    /* Fallback */
     #fallback {
-      display: none;
-      position: fixed;
-      top: 50%; left: 50%;
+      display: none; position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.9);
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 20px 28px;
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.8;
+      background: rgba(0,0,0,0.9); border: 1px solid #333;
+      border-radius: 8px; padding: 20px 28px;
+      text-align: center; font-size: 13px; line-height: 1.8;
+    }
+
+    /* ═══════════════════════════════════════════════
+       MOBILE  (≤ 768 px)
+    ═══════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+
+      /* Show hamburger, hide sidebar by default */
+      #menu-btn { display: flex; }
+      #sidebar {
+        transform: translateX(-100%);
+        width: min(290px, 85vw);
+      }
+      #sidebar.open { transform: translateX(0); }
+      /* Disable desktop collapse on mobile */
+      #sidebar.collapsed { transform: translateX(-100%); }
+      #sidebar.collapsed.open { transform: translateX(0); }
+
+      /* Overlay backdrop */
+      #sb-overlay.visible { display: block; }
+
+      /* Shift header text right so hamburger doesn't overlap */
+      #sb-header { padding-left: 54px; }
+
+      /* Larger touch targets for rows */
+      .sb-planet-row { min-height: 44px; padding: 8px 10px 8px 14px; }
+      .sb-moon-row   { min-height: 40px; padding: 8px 10px 8px 30px; }
+
+      /* Hide WASD on mobile (no keyboard) */
+      .ctrl-keys { display: none; }
+      .ctrl-divider { display: none; }
+
+      /* Planet info slides up from bottom */
+      #planet-info {
+        top: auto; bottom: 0; right: 0; left: 0;
+        transform: translateY(105%);
+        width: 100%;
+        max-height: 70vh;
+        border-radius: 16px 16px 0 0;
+        border-right: 1px solid rgba(100,160,255,0.15);
+        border-bottom: none;
+        border-left: 1px solid rgba(100,160,255,0.15);
+      }
+      #planet-info.visible { transform: translateY(0); }
+
+      .pi-body { max-height: calc(70vh - 110px); }
+
+      /* Hint hidden on mobile */
+      #hint { display: none; }
     }
   </style>
 </head>
 <body>
   <div id="hud">
-    <div id="title">Solar System · WebGPU</div>
 
-    <!-- ── Rich planet info panel ───────────────────── -->
+    <!-- Mobile hamburger (hidden on desktop) -->
+    <button id="menu-btn" aria-label="Open navigation">☰</button>
+
+    <!-- Sidebar backdrop for mobile -->
+    <div id="sb-overlay"></div>
+
+    <!-- ── Left sidebar ──────────────────────────────── -->
+    <div id="sidebar">
+      <div id="sb-header">
+        <div id="sb-title-wrap">
+          <div id="sb-title">Solar System</div>
+          <div id="sb-badge">WebGPU</div>
+        </div>
+        <button id="sb-collapse" title="Collapse sidebar">‹</button>
+      </div>
+
+      <div id="sb-search-wrap">
+        <input id="sb-search" type="text" placeholder="Search planets &amp; moons…"
+               autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div id="sb-list"></div>
+
+      <!-- Controls live at the bottom of the sidebar -->
+      <div id="sb-footer">
+        <div class="ctrl-row">
+          <span class="ctrl-label">TIME SPEED</span>
+          <input id="speed-slider" type="range" min="0" max="5" step="0.01" value="1" />
+          <span id="speed-val" class="ctrl-val">1×</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">ORBITS</span>
+          <input id="orbits-toggle" type="range" min="0" max="1" step="1" value="0" />
+          <span id="orbits-val" class="ctrl-val">OFF</span>
+        </div>
+
+        <div class="ctrl-divider"></div>
+
+        <div class="ctrl-keys">
+          <div class="key-row">
+            <div class="key-cluster">
+              <div class="key-cluster-top"><kbd>W</kbd></div>
+              <div class="key-cluster-mid"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+            </div>
+            <span class="key-desc">Move camera</span>
+          </div>
+          <div class="key-row">
+            <kbd class="key-wide">⇧ Shift</kbd>
+            <span class="key-desc">Sprint</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Rich planet / moon info panel ────────────── -->
     <div id="planet-info">
       <div id="pi-color-bar"></div>
       <button id="pi-close" title="Close">✕</button>
@@ -296,8 +414,6 @@
       </div>
 
       <div class="pi-body">
-
-        <!-- Orbital -->
         <div class="pi-section">
           <div class="pi-section-title">Orbital Data</div>
           <div class="pi-grid">
@@ -306,7 +422,7 @@
               <div class="pi-stat-value" id="pi-diam"></div>
             </div>
             <div>
-              <div class="pi-stat-label">Distance from Sun</div>
+              <div class="pi-stat-label" id="pi-dist-label">Distance from Sun</div>
               <div class="pi-stat-value" id="pi-dist"></div>
             </div>
             <div>
@@ -320,7 +436,6 @@
           </div>
         </div>
 
-        <!-- Physical -->
         <div class="pi-section">
           <div class="pi-section-title">Physical Properties</div>
           <div class="pi-grid">
@@ -347,12 +462,9 @@
           </div>
         </div>
 
-        <!-- Temperature -->
         <div class="pi-section">
           <div class="pi-section-title">Surface Temperature</div>
-          <div class="pi-temp-bar-wrap">
-            <div id="pi-temp-marker"></div>
-          </div>
+          <div class="pi-temp-bar-wrap"><div id="pi-temp-marker"></div></div>
           <div class="pi-temp-labels">
             <span id="pi-temp-min"></span>
             <span id="pi-temp-max"></span>
@@ -360,7 +472,6 @@
           <div id="pi-temp-avg"></div>
         </div>
 
-        <!-- Atmosphere -->
         <div class="pi-section">
           <div class="pi-section-title">Atmosphere &amp; Magnetism</div>
           <div id="pi-atmo"></div>
@@ -368,31 +479,14 @@
           <div id="pi-magnetic"></div>
         </div>
 
-        <!-- Facts -->
         <div class="pi-section">
           <div class="pi-section-title">Did You Know?</div>
           <ul id="pi-facts"></ul>
         </div>
-
-      </div><!-- /pi-body -->
-    </div><!-- /planet-info -->
-
-    <!-- Controls -->
-    <div id="controls">
-      <div class="ctrl-row">
-        <span class="ctrl-label">TIME SPEED</span>
-        <input id="speed-slider" type="range" min="0" max="5" step="0.01" value="1" />
-        <span id="speed-val">1×</span>
-      </div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">ORBITS</span>
-        <input id="orbits-toggle" type="range" min="0" max="1" step="1" value="1" />
-        <span id="orbits-val">ON</span>
       </div>
     </div>
 
-    <div id="legend"></div>
-    <div id="hint">SCROLL · DRAG · HOVER planet · CLICK for details</div>
+    <div id="hint">SCROLL · DRAG · CLICK planet or moon · SEARCH sidebar</div>
   </div>
 
   <div id="fallback">
@@ -401,9 +495,35 @@
 
   <script type="module" src="/src/main.js"></script>
   <script>
-    // Close button
+    const sidebar  = document.getElementById('sidebar');
+    const overlay  = document.getElementById('sb-overlay');
+    const isMobile = () => window.innerWidth <= 768;
+
+    // Close button in info panel
     document.getElementById('pi-close').addEventListener('click', () => {
       document.getElementById('planet-info').classList.remove('visible');
+    });
+
+    // Sidebar collapse / close
+    document.getElementById('sb-collapse').addEventListener('click', () => {
+      if (isMobile()) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+      } else {
+        sidebar.classList.toggle('collapsed');
+      }
+    });
+
+    // Mobile hamburger opens sidebar
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      sidebar.classList.add('open');
+      overlay.classList.add('visible');
+    });
+
+    // Tap overlay to close sidebar on mobile
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('visible');
     });
   </script>
 </body>

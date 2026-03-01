@@ -136,8 +136,8 @@ function createMeteors(scene) {
 }
 
 function spawnMeteor(existingMeteor) {
-  // Random origin far out in the system
-  const outerR = 250;
+  // Random origin far out in the system — scaled for DIST_SCALE = 160
+  const outerR = DIST_SCALE * 12; // ~1920 units, near Uranus orbit
   const theta  = Math.random() * Math.PI * 2;
   const phi    = (Math.random() - 0.5) * 0.3; // near ecliptic
 
@@ -149,14 +149,14 @@ function spawnMeteor(existingMeteor) {
 
   // Aim roughly toward the inner solar system with some scatter
   const target = new THREE.Vector3(
-    (Math.random() - 0.5) * 30,
-    (Math.random() - 0.5) * 10,
-    (Math.random() - 0.5) * 30
+    (Math.random() - 0.5) * DIST_SCALE * 2.5,
+    (Math.random() - 0.5) * DIST_SCALE * 0.8,
+    (Math.random() - 0.5) * DIST_SCALE * 2.5
   );
 
   const dir = target.clone().sub(startPos).normalize();
-  const speed = 8 + Math.random() * 15;        // units/second
-  const length = 1.5 + Math.random() * 3.5;    // trail length
+  const speed  = 100 + Math.random() * 200;    // units/second (scaled for larger scene)
+  const length = 20  + Math.random() * 40;     // trail length (scaled)
 
   // Line geometry: two points (tail → head)
   const points = [startPos.clone(), startPos.clone().addScaledVector(dir, -length)];
