@@ -249,9 +249,24 @@ function animate() {
     camTransition.elapsed += delta;
     const t = Math.min(camTransition.elapsed / camTransition.duration, 1.0);
     const ease = easeInOutCubic(t);
-    camera.position.lerpVectors(camTransition.startPos, camTransition.endPos, ease);
-    controls.target.lerpVectors(camTransition.startTarget, camTransition.endTarget, ease);
-    if (t >= 1.0) camTransition = null;
+
+    // Recalculate end target and position dynamically so it tracks moving bodies
+    const targetPos = camTransition.body.isSun
+      ? new THREE.Vector3(0, 0, 0)
+      : camTransition.body.mesh.position.clone();
+
+    const destPos = targetPos.clone().add(camTransition.currentDir.clone().multiplyScalar(camTransition.approachDist));
+
+    camera.position.lerpVectors(camTransition.startPos, destPos, ease);
+    controls.target.lerpVectors(camTransition.startTarget, targetPos, ease);
+
+    // Ensure camera strictly looks at target during the fly-to
+    camera.lookAt(controls.target);
+
+    if (t >= 1.0) {
+      camTransition = null;
+      lastFocusedPos = targetPos.clone(); // seamless handoff to delta-tracking
+    }
   }
 
   // ── Planet / body tracking ─────────────────────────────────────────
@@ -478,11 +493,6 @@ function easeInOutCubic(t) {
 function flyToBody(body) {
   if (!body) return;
 
-  // Where should the orbit pivot be?
-  const endTarget = body.isSun
-    ? new THREE.Vector3(0, 0, 0)
-    : body.mesh.position.clone();
-
   // How far from the pivot should the camera sit?
   const approachDist = body.isSun
     ? SUN_RADIUS * 2.5                        // see the full solar disk
@@ -492,13 +502,13 @@ function flyToBody(body) {
 
   // Keep current viewing angle but aim at the new target
   const currentDir = camera.position.clone().sub(controls.target).normalize();
-  const endPos = endTarget.clone().add(currentDir.multiplyScalar(approachDist));
 
   camTransition = {
+    body,
     startPos: camera.position.clone(),
-    endPos,
     startTarget: controls.target.clone(),
-    endTarget: endTarget.clone(),
+    currentDir,
+    approachDist,
     elapsed: 0,
     duration: 2.0,                         // seconds
   };
