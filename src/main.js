@@ -647,6 +647,9 @@ function showPlanetInfo(data) {
   });
 
   panel.classList.add('visible');
+  if (window.innerWidth <= 768) {
+    panel.classList.add('minimised');
+  }
 }
 
 function showMoonInfo(data) {
@@ -702,6 +705,9 @@ function showMoonInfo(data) {
   });
 
   panel.classList.add('visible');
+  if (window.innerWidth <= 768) {
+    panel.classList.add('minimised');
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

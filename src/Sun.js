@@ -62,8 +62,8 @@ export function createSun(scene) {
     const warmSurface = vec3(1.0, 0.55, 0.05);
     const plasma = mix(warmSurface, hotCore, blend);
 
-    // Blend texture + plasma emissive, multiplied for brightness
-    return mix(base, plasma, float(0.4)).mul(5.0);
+    // Blend texture + plasma emissive
+    return mix(base, plasma, float(0.4)).mul(5);
   })();
 
   coreMat.roughnessNode = float(1.0);
