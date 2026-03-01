@@ -19,36 +19,36 @@ import { createAsteroidBelt, updateAsteroidBelt, updateMeteors } from './Asteroi
 
 let renderer, scene, camera, controls, clock;
 let planets = [];
-let moons   = [];
+let moons = [];
 let orbitLines = [];
 let asteroidBelt, meteors;
 let sunLight;
-let sunObject    = null;   // the Sun treated like a selectable body
+let sunObject = null;   // the Sun treated like a selectable body
 let starfieldGroup = null; // kept to follow camera every frame
 
 let elapsedDays = 0;
-let speedMult   = 1;
-let showOrbits  = false;
+let speedMult = 1;
+let showOrbits = false;
 
 // ── Camera navigation ────────────────────────────────────────────────────────
-let focusedBody       = null;  // body currently being followed
-let lastFocusedPos    = null;  // planet's world position on the previous frame (for delta tracking)
-let camTransition     = null;  // { startPos, endPos, startTarget, endTarget, elapsed, duration }
+let focusedBody = null;  // body currently being followed
+let lastFocusedPos = null;  // planet's world position on the previous frame (for delta tracking)
+let camTransition = null;  // { startPos, endPos, startTarget, endTarget, elapsed, duration }
 
 // ── WASD free-fly ────────────────────────────────────────────────────────────
 const keysDown = new Set();
 // Pre-allocated to avoid per-frame GC pressure
-const _fwd  = new THREE.Vector3();
+const _fwd = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _move = new THREE.Vector3();
 
 // Raycaster — shared for hover + click
-const raycaster     = new THREE.Raycaster();
-const mouse         = new THREE.Vector2();
-let   planetMeshes  = [];        // inner spheres for raycasting (includes Sun core)
-let   hoveredPlanet    = null;   // currently hovered planet/sun/moon object
-let   pointerDownPos   = { x: 0, y: 0 };
-let   activeSidebarItem = null; // currently highlighted sidebar row
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let planetMeshes = [];        // inner spheres for raycasting (includes Sun core)
+let hoveredPlanet = null;   // currently hovered planet/sun/moon object
+let pointerDownPos = { x: 0, y: 0 };
+let activeSidebarItem = null; // currently highlighted sidebar row
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Init
@@ -76,7 +76,7 @@ async function init() {
   await renderer.init();
 
   // Detect which backend was actually used
-  const usingWebGPU = renderer.backend?.constructor?.name?.includes('WebGPU') ?? false;
+  const usingWebGPU = renderer.backend?.isWebGPUBackend ?? false;
   if (!usingWebGPU) {
     document.getElementById('fallback').style.display = 'block';
     setTimeout(() => { document.getElementById('fallback').style.display = 'none'; }, 3000);
@@ -86,7 +86,7 @@ async function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   document.body.appendChild(renderer.domElement);
 
   // Update backend badge in sidebar
@@ -94,16 +94,16 @@ async function init() {
 
   // ── Controls ───────────────────────────────────────────────────────
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping    = true;
-  controls.dampingFactor    = 0.05;
-  controls.minDistance      = 2;
-  controls.maxDistance      = 18000;
-  controls.zoomSpeed        = 1.5;
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.minDistance = 2;
+  controls.maxDistance = 18000;
+  controls.zoomSpeed = 1.5;
 
   // Cancel any in-flight fly-to when the user grabs the camera,
   // but keep focusedBody so the planet-tracking continues through the drag.
   controls.addEventListener('start', () => {
-    camTransition  = null;
+    camTransition = null;
     lastFocusedPos = null; // force delta re-init on next frame
   });
 
@@ -115,7 +115,7 @@ async function init() {
   window.addEventListener('resize', onResize);
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('pointerdown', (e) => { pointerDownPos = { x: e.clientX, y: e.clientY }; });
-  window.addEventListener('pointerup',   onPointerUp);
+  window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return; // don't steal slider focus
     keysDown.add(e.code);
@@ -140,21 +140,21 @@ function buildScene() {
 
   // Sun
   const sun = createSun(scene);
-  sunLight       = sun.sunLight;
+  sunLight = sun.sunLight;
 
   // Configure shadow from sun
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(2048, 2048);
   sunLight.shadow.camera.near = 1;
-  sunLight.shadow.camera.far  = 8000;
+  sunLight.shadow.camera.far = 8000;
 
   // Create a Sun "object" matching the planet object shape for unified hover/click handling
   sunObject = {
-    sphere:    sun.core,
+    sphere: sun.core,
     hoverGlow: sun.sunHoverGlow,
-    mesh:      sun.group,
-    data:      SUN_DATA,
-    isSun:     true,
+    mesh: sun.group,
+    data: SUN_DATA,
+    isSun: true,
   };
   // Sun core goes first so it's always intersected before planets
   planetMeshes.push(sun.core);
@@ -165,10 +165,10 @@ function buildScene() {
 
     // Spread initial orbital angles so planets start at different positions
     const startAngle = Math.random() * Math.PI * 2;
-    const startDays  = (startAngle / (Math.PI * 2)) * data.periodDays;
+    const startDays = (startAngle / (Math.PI * 2)) * data.periodDays;
 
     planet.startOffset = startDays;
-    planet.rotSpeed    = 0.3 + Math.random() * 0.7;
+    planet.rotSpeed = 0.3 + Math.random() * 0.7;
     planets.push(planet);
     // Raycaster targets the inner sphere (tiltGroup itself has no geometry)
     planetMeshes.push(planet.sphere);
@@ -191,7 +191,7 @@ function buildScene() {
   // Asteroid belt & meteors
   const beltResult = createAsteroidBelt(scene);
   asteroidBelt = beltResult.belt;
-  meteors      = beltResult.meteors;
+  meteors = beltResult.meteors;
 
   // Build sidebar
   buildSidebar();
@@ -213,7 +213,7 @@ function animate() {
   // ── Update planet positions ────────────────────────────────────────
   for (const planet of planets) {
     const days = elapsedDays + planet.startOffset;
-    const pos  = getOrbitalPosition(planet.data, days);
+    const pos = getOrbitalPosition(planet.data, days);
     planet.mesh.position.copy(pos);
 
     // Self-rotation on the inner sphere (keeps tilt separate)
@@ -228,9 +228,9 @@ function animate() {
   for (const moon of moons) {
     moon.orbitAngle += moon.orbitSpeed * delta * speedMult;
     const parent = moon.parentPlanet.mesh.position;
-    const inc    = (moon.data.inclinationDeg ?? 0) * DEG;
-    const x      = moon.orbitRadius * Math.cos(moon.orbitAngle);
-    const z      = moon.orbitRadius * Math.sin(moon.orbitAngle);
+    const inc = (moon.data.inclinationDeg ?? 0) * DEG;
+    const x = moon.orbitRadius * Math.cos(moon.orbitAngle);
+    const z = moon.orbitRadius * Math.sin(moon.orbitAngle);
     moon.mesh.position.set(
       parent.x + x,
       parent.y + z * Math.sin(inc),
@@ -247,9 +247,9 @@ function animate() {
   // ── Camera fly-to transition ───────────────────────────────────────
   if (camTransition) {
     camTransition.elapsed += delta;
-    const t    = Math.min(camTransition.elapsed / camTransition.duration, 1.0);
+    const t = Math.min(camTransition.elapsed / camTransition.duration, 1.0);
     const ease = easeInOutCubic(t);
-    camera.position.lerpVectors(camTransition.startPos,    camTransition.endPos,    ease);
+    camera.position.lerpVectors(camTransition.startPos, camTransition.endPos, ease);
     controls.target.lerpVectors(camTransition.startTarget, camTransition.endTarget, ease);
     if (t >= 1.0) camTransition = null;
   }
@@ -277,22 +277,22 @@ function animate() {
   if (keysDown.size > 0) {
     const sprint = keysDown.has('ShiftLeft') || keysDown.has('ShiftRight');
     // Speed scales with distance to target so it feels the same at any zoom level
-    const speed  = controls.target.distanceTo(camera.position) * delta * (sprint ? 0.6 : 0.12);
+    const speed = controls.target.distanceTo(camera.position) * delta * (sprint ? 0.6 : 0.12);
 
     camera.getWorldDirection(_fwd);
     _right.crossVectors(_fwd, camera.up).normalize();
     _move.set(0, 0, 0);
 
-    if (keysDown.has('KeyW')) _move.addScaledVector(_fwd,   speed);
-    if (keysDown.has('KeyS')) _move.addScaledVector(_fwd,  -speed);
+    if (keysDown.has('KeyW')) _move.addScaledVector(_fwd, speed);
+    if (keysDown.has('KeyS')) _move.addScaledVector(_fwd, -speed);
     if (keysDown.has('KeyA')) _move.addScaledVector(_right, -speed);
-    if (keysDown.has('KeyD')) _move.addScaledVector(_right,  speed);
+    if (keysDown.has('KeyD')) _move.addScaledVector(_right, speed);
 
     if (_move.lengthSq() > 0) {
       camera.position.add(_move);
       controls.target.add(_move);
       // Break planet-follow so tracking doesn't fight the manual movement
-      focusedBody    = null;
+      focusedBody = null;
       lastFocusedPos = null;
     }
   }
@@ -312,20 +312,20 @@ function animate() {
 
 function buildUI() {
   // Speed slider
-  const slider   = document.getElementById('speed-slider');
+  const slider = document.getElementById('speed-slider');
   const speedVal = document.getElementById('speed-val');
 
   // Map slider 0..5 → time multiplier: 0 = paused, 1 = 1×, 5 = ~5000×
   slider.addEventListener('input', () => {
-    const v    = parseFloat(slider.value);
+    const v = parseFloat(slider.value);
     // Exponential scale: 0→0, 1→1, 5→10000
-    speedMult  = v === 0 ? 0 : Math.pow(10, v * 0.85 - 0.85);
+    speedMult = v === 0 ? 0 : Math.pow(10, v * 0.85 - 0.85);
     speedVal.textContent = v === 0 ? 'PAUSE' : `${speedMult.toFixed(speedMult < 10 ? 1 : 0)}×`;
   });
 
   // Orbits toggle
   const orbitsSlider = document.getElementById('orbits-toggle');
-  const orbitsVal    = document.getElementById('orbits-val');
+  const orbitsVal = document.getElementById('orbits-val');
 
   orbitsSlider.addEventListener('input', () => {
     showOrbits = orbitsSlider.value === '1';
@@ -346,12 +346,12 @@ function buildSidebar() {
   list.appendChild(makePlanetRow(SUN_DATA, sunObject, '#ffb020'));
 
   for (const data of PLANET_DATA) {
-    const planet   = planets.find(p => p.data === data);
+    const planet = planets.find(p => p.data === data);
     const moonList = moons.filter(m => m.data.parentName === data.name);
     const hasMoons = moonList.length > 0;
-    const hex      = '#' + data.color.toString(16).padStart(6, '0');
+    const hex = '#' + data.color.toString(16).padStart(6, '0');
 
-    const wrapper  = document.createElement('div');
+    const wrapper = document.createElement('div');
     wrapper.className = 'sb-planet-wrapper';
 
     const planetRow = makePlanetRow(data, planet, hex, hasMoons);
@@ -443,9 +443,9 @@ function filterSidebar(q) {
 
   document.querySelectorAll('.sb-planet-wrapper').forEach(wrapper => {
     const planetRow = wrapper.querySelector('.sb-planet-row');
-    const moonRows  = wrapper.querySelectorAll('.sb-moon-row');
+    const moonRows = wrapper.querySelectorAll('.sb-moon-row');
     const moonListEl = wrapper.querySelector('.sb-moon-list');
-    const expandBtn  = wrapper.querySelector('.sb-expand-btn');
+    const expandBtn = wrapper.querySelector('.sb-expand-btn');
 
     const planetMatch = !q || (planetRow?.dataset.name ?? '').includes(q);
     let anyMoonMatch = false;
@@ -492,18 +492,18 @@ function flyToBody(body) {
 
   // Keep current viewing angle but aim at the new target
   const currentDir = camera.position.clone().sub(controls.target).normalize();
-  const endPos     = endTarget.clone().add(currentDir.multiplyScalar(approachDist));
+  const endPos = endTarget.clone().add(currentDir.multiplyScalar(approachDist));
 
   camTransition = {
-    startPos:    camera.position.clone(),
+    startPos: camera.position.clone(),
     endPos,
     startTarget: controls.target.clone(),
-    endTarget:   endTarget.clone(),
-    elapsed:     0,
-    duration:    2.0,                         // seconds
+    endTarget: endTarget.clone(),
+    elapsed: 0,
+    duration: 2.0,                         // seconds
   };
 
-  focusedBody    = body;
+  focusedBody = body;
   lastFocusedPos = null; // delta tracking initialises on the first frame after transition
 }
 
@@ -519,15 +519,15 @@ function findObjectBySphere(obj) {
 }
 
 function onPointerMove(event) {
-  mouse.x = (event.clientX / window.innerWidth)  * 2 - 1;
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects(planetMeshes, false);
 
   if (hits.length > 0) {
-    const obj    = hits[0].object;
-    const body   = findObjectBySphere(obj);
+    const obj = hits[0].object;
+    const body = findObjectBySphere(obj);
     if (body && body !== hoveredPlanet) {
       // Leave previous
       if (hoveredPlanet) {
@@ -574,15 +574,15 @@ function onPointerUp(event) {
 
 function showPlanetInfo(data) {
   if (data.parentName) { showMoonInfo(data); return; }
-  const panel  = document.getElementById('planet-info');
+  const panel = document.getElementById('planet-info');
   const isStar = data.name === 'Sun';
 
   // ── Header ────────────────────────────────────────────────────────
   const hex = '#' + data.color.toString(16).padStart(6, '0');
   document.getElementById('pi-color-bar').style.background =
     `linear-gradient(135deg, ${hex}88, ${hex}22)`;
-  document.getElementById('pi-type').textContent     = data.type ?? '';
-  document.getElementById('pi-name').textContent     = data.name;
+  document.getElementById('pi-type').textContent = data.type ?? '';
+  document.getElementById('pi-name').textContent = data.name;
   document.getElementById('pi-subtitle').textContent = data.subtitle ?? '';
 
   // ── Orbital ───────────────────────────────────────────────────────
@@ -590,7 +590,7 @@ function showPlanetInfo(data) {
   document.getElementById('pi-dist-label').textContent = isStar ? 'Location' : 'Distance from Sun';
 
   if (isStar) {
-    document.getElementById('pi-dist').textContent   = 'Center of Solar System';
+    document.getElementById('pi-dist').textContent = 'Center of Solar System';
     document.getElementById('pi-period').textContent = '—';
   } else {
     document.getElementById('pi-dist').textContent = `${data.distanceAU.toFixed(3)} AU`;
@@ -604,14 +604,14 @@ function showPlanetInfo(data) {
   // ── Physical ──────────────────────────────────────────────────────
   document.getElementById('pi-gravity').textContent = `${data.gravityG?.toFixed(2) ?? '?'} g`;
   document.getElementById('pi-density').textContent = `${data.density?.toFixed(2) ?? '?'} g/cm³`;
-  document.getElementById('pi-escape').textContent  = `${data.escapeVelKms?.toFixed(1) ?? '?'} km/s`;
+  document.getElementById('pi-escape').textContent = `${data.escapeVelKms?.toFixed(1) ?? '?'} km/s`;
   const rotStr = data.rotationDays != null
     ? (Math.abs(data.rotationDays) < 1
-        ? `${(Math.abs(data.rotationDays) * 24).toFixed(1)} h${data.rotationDays < 0 ? ' ↺' : ''}`
-        : `${Math.abs(data.rotationDays).toFixed(2)} d${data.rotationDays < 0 ? ' ↺' : ''}`)
+      ? `${(Math.abs(data.rotationDays) * 24).toFixed(1)} h${data.rotationDays < 0 ? ' ↺' : ''}`
+      : `${Math.abs(data.rotationDays).toFixed(2)} d${data.rotationDays < 0 ? ' ↺' : ''}`)
     : '?';
   document.getElementById('pi-rotation').textContent = rotStr;
-  document.getElementById('pi-tilt').textContent     = `${data.axialTiltDeg?.toFixed(1) ?? '?'}°`;
+  document.getElementById('pi-tilt').textContent = `${data.axialTiltDeg?.toFixed(1) ?? '?'}°`;
 
   // ── Temperature bar ───────────────────────────────────────────────
   const tMin = data.tempMin ?? -200, tMax = data.tempMax ?? 200, tAvg = data.tempAvg ?? 0;
@@ -633,9 +633,9 @@ function showPlanetInfo(data) {
   }
 
   // ── Atmosphere ────────────────────────────────────────────────────
-  document.getElementById('pi-atmo').textContent       = data.atmosphere ?? '—';
+  document.getElementById('pi-atmo').textContent = data.atmosphere ?? '—';
   document.getElementById('pi-atmo-detail').textContent = data.atmoDetail ?? '';
-  document.getElementById('pi-magnetic').textContent   = data.magneticField ?? '—';
+  document.getElementById('pi-magnetic').textContent = data.magneticField ?? '—';
 
   // ── Fun facts ─────────────────────────────────────────────────────
   const factsList = document.getElementById('pi-facts');
@@ -651,17 +651,17 @@ function showPlanetInfo(data) {
 
 function showMoonInfo(data) {
   const panel = document.getElementById('planet-info');
-  const hex   = '#' + data.color.toString(16).padStart(6, '0');
+  const hex = '#' + data.color.toString(16).padStart(6, '0');
 
   document.getElementById('pi-color-bar').style.background =
     `linear-gradient(135deg, ${hex}88, ${hex}22)`;
-  document.getElementById('pi-type').textContent     = data.type ?? 'Natural Satellite';
-  document.getElementById('pi-name').textContent     = data.name;
+  document.getElementById('pi-type').textContent = data.type ?? 'Natural Satellite';
+  document.getElementById('pi-name').textContent = data.name;
   document.getElementById('pi-subtitle').textContent = data.subtitle ?? `Moon of ${data.parentName}`;
 
-  document.getElementById('pi-diam').textContent   = `${(data.radiusKm * 2).toLocaleString()} km`;
+  document.getElementById('pi-diam').textContent = `${(data.radiusKm * 2).toLocaleString()} km`;
   document.getElementById('pi-dist-label').textContent = `Distance from ${data.parentName}`;
-  document.getElementById('pi-dist').textContent   = `${data.distancePlanetKm.toLocaleString()} km`;
+  document.getElementById('pi-dist').textContent = `${data.distancePlanetKm.toLocaleString()} km`;
 
   const absPeriod = Math.abs(data.periodDays);
   const retrograde = data.periodDays < 0 ? ' ↺' : '';
@@ -669,13 +669,13 @@ function showMoonInfo(data) {
     ? `${(absPeriod * 24).toFixed(1)} h${retrograde}`
     : `${absPeriod.toFixed(2)} d${retrograde}`;
   document.getElementById('pi-period').textContent = period;
-  document.getElementById('pi-moons').textContent  = '—';
+  document.getElementById('pi-moons').textContent = '—';
 
-  document.getElementById('pi-gravity').textContent  = data.gravityG     ? `${data.gravityG.toFixed(2)} g`         : '—';
-  document.getElementById('pi-density').textContent  = data.density      ? `${data.density.toFixed(2)} g/cm³`      : '—';
-  document.getElementById('pi-escape').textContent   = data.escapeVelKms ? `${data.escapeVelKms.toFixed(2)} km/s`  : '—';
+  document.getElementById('pi-gravity').textContent = data.gravityG ? `${data.gravityG.toFixed(2)} g` : '—';
+  document.getElementById('pi-density').textContent = data.density ? `${data.density.toFixed(2)} g/cm³` : '—';
+  document.getElementById('pi-escape').textContent = data.escapeVelKms ? `${data.escapeVelKms.toFixed(2)} km/s` : '—';
   document.getElementById('pi-rotation').textContent = 'Tidally locked';
-  document.getElementById('pi-tilt').textContent     = data.axialTiltDeg != null ? `${data.axialTiltDeg.toFixed(1)}°` : '—';
+  document.getElementById('pi-tilt').textContent = data.axialTiltDeg != null ? `${data.axialTiltDeg.toFixed(1)}°` : '—';
 
   const tMin = data.tempMin ?? null, tMax = data.tempMax ?? null, tAvg = data.tempAvg ?? null;
   document.getElementById('pi-temp-min').textContent = tMin != null ? `${tMin} °C` : '—';
@@ -689,9 +689,9 @@ function showMoonInfo(data) {
     document.getElementById('pi-temp-marker').style.left = '50%';
   }
 
-  document.getElementById('pi-atmo').textContent       = data.atmosphere  ?? 'None';
+  document.getElementById('pi-atmo').textContent = data.atmosphere ?? 'None';
   document.getElementById('pi-atmo-detail').textContent = data.atmoDetail ?? '';
-  document.getElementById('pi-magnetic').textContent   = data.magneticField ?? '—';
+  document.getElementById('pi-magnetic').textContent = data.magneticField ?? '—';
 
   const factsList = document.getElementById('pi-facts');
   factsList.innerHTML = '';
